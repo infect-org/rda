@@ -53,4 +53,4 @@ The int values need to be replaced with a unix timestamp value (seconds, not mic
 2. Type `sudo systemctl restart rda.service`
 3. Check the logs and wait until the application is loaded: `sudo journalctl -u rda -fn 3000`
 4. Once the app is loaded, go to the directory `/home/ubuntu/apps/rda/beta-ship/`
-4. Build the cluster by typing the command `npm run cluster-int`. This comman dcan only be executed once per cluster. If it fails you need to restart rda before you try again.
+4. Build the cluster by typing the command `npm run cluster-int`. This command can only be executed once per cluster. If it fails you need to restart rda before you can try again.
