@@ -35,7 +35,7 @@ export default class DataController extends Controller {
     * returns a computed data set
     */
     async list(request, response) {
-        const dataSet = 'infect-beta';
+        const dataSet = request.query.dataSet || 'infect-beta-june';
         const dataSource = 'infect-rda-sample-storage';
         const functionName = 'infect-default';
         let filter;
