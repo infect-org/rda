@@ -35,7 +35,7 @@ export default class DataController extends Controller {
     * returns a computed data set
     */
     async list(request, response) {
-        const dataSet = request.query.dataSet || 'infect-beta-june';
+        const dataSet = request.query.dataSet || 'infect-beta';
         const dataSource = 'infect-rda-sample-storage';
         const functionName = 'infect-default';
         let filter;
@@ -111,6 +111,7 @@ export default class DataController extends Controller {
             const filter = {
                 ageGroupIds: [],
                 regionIds: [],
+                hospitalStatusIds: [],
             };
 
             if (rawFilter && rawFilter.ageGroupIds) {
@@ -132,6 +133,17 @@ export default class DataController extends Controller {
                         } else throw new Error(`Invalid filter value in regionIds: expected an integer!`);
                     });
                 } else throw new Error(`Invalid filter value regionIds: expected an array!`);
+            }
+
+
+            if (rawFilter && rawFilter.hospitalStatusIds) {
+                if (Array.isArray(rawFilter.hospitalStatusIds)) {
+                    rawFilter.hospitalStatusIds.forEach((id) => {
+                        if (!Number.isNaN(id)) {
+                            filter.hospitalStatusIds.push(id);
+                        } else throw new Error(`Invalid filter value in hospitalStatusIds: expected an integer!`);
+                    });
+                } else throw new Error(`Invalid filter value hospitalStatusIds: expected an array!`);
             }
 
             if (rawFilter && rawFilter.dateFrom && rawFilter.dateTo) {
