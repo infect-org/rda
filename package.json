@@ -1,13 +1,13 @@
 {
-  "name": "rda",
-  "version": "1.0.0",
+  "name": "@infect/rda",
+  "version": "2.0.0",
   "description": "RDA public API",
-  "main": "index.mjs",
+  "main": "index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "node --experimental-modules ./node_modules/.bin/section ./test/*.mjs --dev --subenv-testing --log-level=error+ --log-module=*"
+    "test": "node --experimental-modules --no-warnings ./node_modules/.bin/section ./test/*.js --dev.testing --log-level=error+ --log-module=*"
   },
   "repository": {
     "type": "git",
@@ -17,7 +17,7 @@
     "rda",
     "public-api"
   ],
-  "author": "Michael van der Weg",
+  "author": "Lina van der Weg",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/infect-org/rda/issues"
@@ -27,12 +27,13 @@
     "section-tests": "^2.2.4"
   },
   "dependencies": {
+    "@infect/rda-service": "^4.0.4",
+    "@infect/rda-service-manager": "^2.0.3",
     "ee-log": "^3.0.9",
     "ee-lru-cache": "^1.0.0",
-    "envr": "^2.1.4",
     "logd": "^2.3.0",
     "logd-console-transport": "^1.1.0",
-    "rda-service": "^2.5.2",
     "superagent": "^3.8.3"
-  }
+  },
+  "type": "module"
 }

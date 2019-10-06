@@ -1,9 +1,8 @@
-'use strict';
-
-
-import {Controller} from 'rda-service';
+import {Controller} from '@infect/rda-service';
 import superagent from 'superagent';
 import logd from 'logd';
+import LRUCache from 'ee-lru-cache';
+import crypto from 'crypto';
 
 
 
@@ -22,6 +21,11 @@ export default class DataController extends Controller {
         // urls to remote services
         this.registryClient = registryClient;
 
+        // cache most used request for up to an hour
+        this.cache = new LRUCache({
+            limit: 2000,
+            ttl: 3600 * 1000,
+        });
 
         this.enableAction('list');
     }
@@ -47,28 +51,72 @@ export default class DataController extends Controller {
             return response.status(400).send(`Failed to parse filters: ${err.message}!`);
         }
 
-        // load cluster info
-        const cluster = await this.getCluster({
-            dataSet,
+        const cacheKey = this.getCacheKey({
+            filter,
+            functionName,
             dataSource,
-        });
-        
-        // the cluster is live!
-        // lets take the first shard as the reducer
-        const shardHost = cluster.shards[0].url;
-
-        // call the reducer
-        const start = Date.now();
-        const res = await superagent.post(`${shardHost}/rda-compute.reduction`).ok(res => res.status === 201).send({
-            functionName: functionName,
-            shards: cluster.shards,
-            parameters: filter,
+            dataSet,
         });
 
-       return res.body;
+
+        // try to return the cached data
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
+        } else {
+
+             // load cluster info
+            const cluster = await this.getCluster({
+                dataSet,
+                dataSource,
+            });
+            
+            // the cluster is live!
+            // lets take the first shard as the reducer
+            const shardHost = cluster.shards[0].url;
+
+            // call the reducer
+            const res = await superagent.post(`${shardHost}/rda-compute.reduction`).ok(res => res.status === 201).send({
+                functionName: functionName,
+                shards: cluster.shards,
+                parameters: filter,
+            });
+
+            this.cache.set(cacheKey, res.body);
+
+            return res.body;
+        }
     }
 
 
+
+
+
+
+    /**
+     * generates a cache key that can be used to store data in the lru cache
+     */
+    getCacheKey({
+        filter,
+        functionName,
+        dataSet,
+        dataSource,
+    }) {
+        const hash = crypto.createHash('md5');
+
+        hash.update(dataSource);
+        hash.update('|');
+        hash.update(dataSet);
+        hash.update('|');
+        hash.update(functionName);
+        hash.update('|');
+        hash.update(filter.ageGroupIds.sort().join(','));
+        hash.update('|');
+        hash.update(filter.regionIds.sort().join(','));
+        hash.update('|');
+        hash.update(filter.hospitalStatusIds.sort().join(','));
+
+        return hash.digest('hex');
+    }
 
 
 

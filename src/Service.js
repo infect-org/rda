@@ -1,7 +1,4 @@
-'use strict';
-
-
-import RDAService from 'rda-service';
+import RDAService from '@infect/rda-service';
 import path from 'path';
 import logd from 'logd';
 
@@ -10,10 +7,12 @@ const log = logd.module('rda');
 
 
 // controllers
-import DataController from './controller/Data';
+import DataController from './controller/Data.js';
 
 
 
+
+const appRoot = path.join(path.dirname(new URL(import.meta.url).pathname), '../');
 
 
 
@@ -22,7 +21,10 @@ export default class RDA extends RDAService {
 
 
     constructor() {
-        super('rda');
+        super({
+            name: 'rda',
+            appRoot,
+        });
     }
 
 
@@ -32,9 +34,10 @@ export default class RDA extends RDAService {
     * prepare the service
     */
     async load() {
+        await this.initialize();
 
         // get a map of data sources
-        this.dataSources = new Set(this.config.dataSources);
+        this.dataSources = new Set(this.config.get('dataSources'));
 
 
         // register controllers
@@ -43,7 +46,7 @@ export default class RDA extends RDAService {
         }));
 
 
-        await super.load(this.config.port);
+        await super.load(this.config.get('server.port'));
 
 
         // tell the service registry that we're up and running

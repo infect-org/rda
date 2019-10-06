@@ -1,6 +1,4 @@
-'use strict';
-
-import Service from '../index.mjs';
+import Service from '../index.js';
 import section from 'section-tests';
 import superagent from 'superagent';
 import assert from 'assert';
