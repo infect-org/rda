@@ -1,6 +1,6 @@
 {
   "name": "@infect/rda",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "RDA public API",
   "main": "index.js",
   "directories": {
