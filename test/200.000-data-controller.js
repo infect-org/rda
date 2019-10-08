@@ -1,6 +1,6 @@
 import Service from '../index.js';
 import section from 'section-tests';
-import superagent from 'superagent';
+import HTTP2Client from '@distributed-systems/http2-client';
 import assert from 'assert';
 import log from 'ee-log';
 
@@ -13,26 +13,29 @@ const host = 'http://l.dns.porn';
 section('Data Controller', (section) => { 
 
     section.test('get data', async() => {
+        const client = new HTTP2Client();
         const service = new Service();
         await service.load();
 
-        const dataResponse = await superagent.get(`${host}:${service.getPort()}/rda.data`).ok(res => res.status === 200).query({
+        const dataResponse = await client.get(`${host}:${service.getPort()}/rda.data`).expect(200).query({
             dataSource: 'infect-rda-sample-storage',
             dataSet: 'infect-beta',
         }).send();
 
         await section.wait(200);
         await service.end();
+        await client.end();
     });
 
 
 
 
     section.test('get filtered data', async() => {
+        const client = new HTTP2Client();
         const service = new Service();
         await service.load();
 
-        const dataResponse = await superagent.get(`${host}:${service.getPort()}/rda.data`).ok(res => res.status === 200).query({
+        const dataResponse = await client.get(`${host}:${service.getPort()}/rda.data`).expect(200).query({
             dataSource: 'infect-rda-sample-storage',
             dataSet: 'infect-beta',
             filter: JSON.stringify({
@@ -42,16 +45,18 @@ section('Data Controller', (section) => {
 
         await section.wait(200);
         await service.end();
+        await client.end();
     });
 
 
 
 
     section.test('get by date filtered data', async() => {
+        const client = new HTTP2Client();
         const service = new Service();
         await service.load();
 
-        const dataResponse = await superagent.get(`${host}:${service.getPort()}/rda.data`).ok(res => res.status === 200).query({
+        const dataResponse = await client.get(`${host}:${service.getPort()}/rda.data`).expect(200).query({
             dataSource: 'infect-rda-sample-storage',
             dataSet: 'infect-beta',
             filter: JSON.stringify({
@@ -62,5 +67,6 @@ section('Data Controller', (section) => {
 
         await section.wait(200);
         await service.end();
+        await client.end();
     });
 });

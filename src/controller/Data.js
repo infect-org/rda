@@ -1,8 +1,8 @@
-import {Controller} from '@infect/rda-service';
-import superagent from 'superagent';
+import { Controller } from '@infect/rda-service';
 import logd from 'logd';
 import LRUCache from 'ee-lru-cache';
 import crypto from 'crypto';
+import HTTP2Client from '@distributed-systems/http2-client';
 
 
 
@@ -28,6 +28,9 @@ export default class DataController extends Controller {
         });
 
         this.enableAction('list');
+
+
+        this.client = new HTTP2Client();
     }
 
 
@@ -38,18 +41,19 @@ export default class DataController extends Controller {
     /**
     * returns a computed data set
     */
-    async list(request, response) {
-        const dataSet = request.query.dataSet || 'infect-beta';
+    async list(request) {
+        const dataSet = request.query.dataSet || 'infect-production';
         const dataSource = 'infect-rda-sample-storage';
         const functionName = 'infect-default';
         let filter;
 
         // parse filters
         try {
-            filter = this.validateFilters(request.query.filter);
+            filter = this.validateFilters(request.query().filter);
         } catch (err) {
-            return response.status(400).send(`Failed to parse filters: ${err.message}!`);
+            return request.response().status(400).send(`Failed to parse filters: ${err.message}!`);
         }
+
 
         const cacheKey = this.getCacheKey({
             filter,
@@ -75,15 +79,16 @@ export default class DataController extends Controller {
             const shardHost = cluster.shards[0].url;
 
             // call the reducer
-            const res = await superagent.post(`${shardHost}/rda-compute.reduction`).ok(res => res.status === 201).send({
+            const res = await this.client.post(`${shardHost}/rda-compute.reduction`).expect(201).send({
                 functionName: functionName,
                 shards: cluster.shards,
                 parameters: filter,
             });
+            const responseData = await res.getData();
 
-            this.cache.set(cacheKey, res.body);
+            this.cache.set(cacheKey, responseData);
 
-            return res.body;
+            return responseData;
         }
     }
 
@@ -130,17 +135,12 @@ export default class DataController extends Controller {
             if (!this.clusterHost) this.clusterHost = await this.registryClient.resolve('rda-cluster');
 
             // get an active infect cluster
-            const clusterResponse = await superagent.get(`${this.clusterHost}/rda-cluster.cluster-info`).query({
+            const clusterResponse = await this.client.get(`${this.clusterHost}/rda-cluster.cluster-info`).query({
                 dataSet,
                 dataSource,
-            }).send();
+            }).expect(200).send();
 
-
-            if (clusterResponse.status === 201) {
-                this.cluster = clusterResponse.body;
-            } else {
-                throw new Error(`Faield to laod the cluster!`);
-            }
+            this.cluster = await clusterResponse.getData();
         }
 
         return this.cluster;
@@ -154,13 +154,15 @@ export default class DataController extends Controller {
 
 
     validateFilters(queryFilter) {
+        const filter = {
+            ageGroupIds: [],
+            regionIds: [],
+            hospitalStatusIds: [],
+        };
+
         if (typeof queryFilter === 'string' && queryFilter.length) {
             const rawFilter = JSON.parse(queryFilter);
-            const filter = {
-                ageGroupIds: [],
-                regionIds: [],
-                hospitalStatusIds: [],
-            };
+            
 
             if (rawFilter && rawFilter.ageGroupIds) {
                 if (Array.isArray(rawFilter.ageGroupIds)) {
@@ -198,8 +200,8 @@ export default class DataController extends Controller {
                 filter.dateFrom = rawFilter.dateFrom;
                 filter.dateTo = rawFilter.dateTo;
             }
-
-            return filter;
         }
+
+        return filter;
     }
 }
