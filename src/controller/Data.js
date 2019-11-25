@@ -44,7 +44,7 @@ export default class DataController extends Controller {
     async list(request) {
         const dataSet = request.query.dataSet || 'infect-production';
         const dataSource = 'infect-rda-sample-storage';
-        const functionName = 'infect-default';
+        const functionName = request.query().functionName || 'infect-default';
         let filter;
 
         // parse filters
