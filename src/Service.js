@@ -8,6 +8,7 @@ const log = logd.module('rda');
 
 // controllers
 import DataController from './controller/Data.js';
+import ConfigurationController from './controller/Configuration.js';
 
 
 
@@ -43,6 +44,11 @@ export default class RDA extends RDAService {
         // register controllers
         this.registerController(new DataController({
             registryClient: this.registryClient,
+        }));
+
+        this.registerController(new ConfigurationController({
+            registryClient: this.registryClient,
+            config: this.config,
         }));
 
 

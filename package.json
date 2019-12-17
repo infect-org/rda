@@ -27,7 +27,7 @@
     "section-tests": "^2.2.4"
   },
   "dependencies": {
-    "@distributed-systems/http2-client": "^2.0.1",
+    "@distributed-systems/http2-client": "^2.0.2",
     "@infect/rda-service": "^4.0.4",
     "@infect/rda-service-manager": "^2.0.3",
     "ee-log": "^3.0.9",

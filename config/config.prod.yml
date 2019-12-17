@@ -4,3 +4,8 @@ server:
     
 service-registry:
     host: ${SERVICE_REGISTRY_HOST}
+
+guideline:
+    host: https://api.infect.info
+    compound-path: /guideline/v1/therapy_compound
+    bacterium-path: /guideline/v1/diagnosis_bacterium

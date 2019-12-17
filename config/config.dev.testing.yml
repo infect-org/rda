@@ -4,3 +4,10 @@ server:
 
 service-registry:
     host: http://l.dns.porn:9000
+
+
+
+guideline:
+    host: https://api.infect.info
+    compound-path: /guideline/v1/therapy_compound
+    bacterium-path: /guideline/v1/diagnosis_bacterium
