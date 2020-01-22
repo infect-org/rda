@@ -42,7 +42,7 @@ export default class DataController extends Controller {
     * returns a computed data set
     */
     async list(request) {
-        const dataSet = request.query.dataSet || 'infect-production';
+        const dataSet = request.query.dataSet || 'infect-human';
         const dataSource = 'infect-rda-sample-storage';
         const functionName = request.query().functionName || 'infect-default';
         let filter;
