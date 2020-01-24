@@ -38,13 +38,17 @@ export default class ConfigurationController extends Controller {
     async list(request) {
         const query = {
             ...request.query(),
-            functionName: 'infect-configuration'
+            functionName: 'InfectConfiguration'
         };
         
         const rdaHost = await this.registryClient.resolve('rda');
+        const authority = request.hasHeader('X-Forwarded-Host') ? request.getHeader('X-Forwarded-Host') : request.getHeader(':authority');
+        const scheme = request.hasHeader('X-Forwarded-Proto') ? request.getHeader('X-Forwarded-Proto') : request.getHeader(':scheme');
 
         // get rda configuration
         const rdaResponse = await this.client.get(`${rdaHost}/rda.data`)
+            .setHeader('X-Forwarded-Host', authority)
+            .setHeader('X-Forwarded-Proto', scheme)
             .query(query)
             .expect(200)
             .send();
@@ -68,16 +72,15 @@ export default class ConfigurationController extends Controller {
         const compoundData = await glCompoundResponse.getData();
         const bacteriumData = await glBacteriumResponse.getData();
         
-
         for (const { id_compound } of compoundData) {
-            if (!data.compoundIds.includes(id_compound)) {
-                data.compoundIds.push(id_compound);
+            if (!data.compoundSubstanceIds.includes(id_compound)) {
+                data.compoundSubstanceIds.push(id_compound);
             }
         }
 
         for (const { id_bacterium } of bacteriumData) {
-            if (!data.bacteriumIds.includes(id_bacterium)) {
-                data.bacteriumIds.push(id_bacterium);
+            if (!data.microorganismIds.includes(id_bacterium)) {
+                data.microorganismIds.push(id_bacterium);
             }
         }
 

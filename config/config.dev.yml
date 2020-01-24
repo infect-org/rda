@@ -11,3 +11,7 @@ guideline:
     host: https://api.infect.info
     compound-path: /guideline/v1/therapy_compound
     bacterium-path: /guideline/v1/diagnosis_bacterium
+
+  
+testing:
+    tenantHost: https://api.infect.info

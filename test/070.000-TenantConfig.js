@@ -1,4 +1,4 @@
-import Service from '../index.js';
+import TenantConfig from '../src/TenantConfig.js';
 import section from 'section-tests';
 import assert from 'assert';
 import log from 'ee-log';
@@ -9,8 +9,19 @@ import ServiceManager from '@infect/rda-service-manager';
 const host = 'http://l.dns.porn:8000';
 
 
+class Request {
+    constructor(headers) {
+        this.headers = headers;
+    }
 
-section('RDA Coordinator Service', (section) => {
+
+    getHeader(name) {
+        return this.headers[name];
+    }
+}
+
+
+section('Tenant Config', (section) => {
     let sm;
 
     section.setup(async() => {
@@ -19,14 +30,20 @@ section('RDA Coordinator Service', (section) => {
         });
         
         await sm.startServices('@infect/rda-service-registry');
+        await sm.startServices('@infect/guideline-service');
     });
 
-    section.test('Start & stop service', async() => {
-        const service = new Service();
 
-        await service.load();
-        await section.wait(200);
-        await service.end();
+    section.test('Start & stop service', async() => {
+        const tc = new TenantConfig();
+        const request = new Request({
+            ':authority': 'api.infect.info',
+            ':scheme': 'https',
+        });
+
+        const config = await tc.get(request);
+
+        assert.equal(config.dataSet, 'infect-human');
     });
 
 

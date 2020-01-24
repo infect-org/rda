@@ -1,7 +1,6 @@
 import { Controller } from '@infect/rda-service';
 import logd from 'logd';
-import LRUCache from 'ee-lru-cache';
-import crypto from 'crypto';
+import Cache from '../Cache.js';
 import HTTP2Client from '@distributed-systems/http2-client';
 
 
@@ -15,22 +14,19 @@ export default class DataController extends Controller {
 
     constructor({
         registryClient,
+        tenantConfig,
     }) {
         super('data');
 
         // urls to remote services
         this.registryClient = registryClient;
+        this.tenantConfig = tenantConfig;
 
         // cache most used request for up to an hour
-        this.cache = new LRUCache({
-            limit: 2000,
-            ttl: 3600 * 1000,
-        });
+        this.cache = new Cache();
+        this.client = new HTTP2Client();
 
         this.enableAction('list');
-
-
-        this.client = new HTTP2Client();
     }
 
 
@@ -42,35 +38,20 @@ export default class DataController extends Controller {
     * returns a computed data set
     */
     async list(request) {
-        const dataSet = request.query.dataSet || 'infect-human';
+        const tenantConfig = await this.tenantConfig.get(request);
+        const query = request.query();
+        const dataSetIdentifier = tenantConfig.dataSet;
         const dataSource = 'infect-rda-sample-storage';
-        const functionName = request.query().functionName || 'infect-default';
-        let filter;
+        const functionName = query && query.functionName ? query.functionName : 'Infect';
+        let parameters = query.filter;
 
-        // parse filters
-        try {
-            filter = this.validateFilters(request.query().filter);
-        } catch (err) {
-            return request.response().status(400).send(`Failed to parse filters: ${err.message}!`);
-        }
-
-
-        const cacheKey = this.getCacheKey({
-            filter,
-            functionName,
-            dataSource,
-            dataSet,
-        });
-
-
-        // try to return the cached data
-        if (this.cache.has(cacheKey)) {
-            return this.cache.get(cacheKey);
+        if (this.cache.has(request)) {
+            return this.cache.get(request);
         } else {
 
              // load cluster info
             const cluster = await this.getCluster({
-                dataSet,
+                dataSetIdentifier,
                 dataSource,
             });
             
@@ -78,15 +59,22 @@ export default class DataController extends Controller {
             // lets take the first shard as the reducer
             const shardHost = cluster.shards[0].url;
 
+
+            if (!parameters) parameters = {};
+
+
             // call the reducer
             const res = await this.client.post(`${shardHost}/rda-compute.reduction`).expect(201).send({
-                functionName: functionName,
+                dataSetIdentifier,
+                functionName,
+                parameters,
                 shards: cluster.shards,
-                parameters: filter,
+                options: tenantConfig,
             });
+
             const responseData = await res.getData();
 
-            this.cache.set(cacheKey, responseData);
+            this.cache.set(request, responseData);
 
             return responseData;
         }
@@ -95,40 +83,8 @@ export default class DataController extends Controller {
 
 
 
-
-
-    /**
-     * generates a cache key that can be used to store data in the lru cache
-     */
-    getCacheKey({
-        filter,
-        functionName,
-        dataSet,
-        dataSource,
-    }) {
-        const hash = crypto.createHash('md5');
-
-        hash.update(dataSource);
-        hash.update('|');
-        hash.update(dataSet);
-        hash.update('|');
-        hash.update(functionName);
-        hash.update('|');
-        hash.update(filter.ageGroupIds.sort().join(','));
-        hash.update('|');
-        hash.update(filter.regionIds.sort().join(','));
-        hash.update('|');
-        hash.update(filter.hospitalStatusIds.sort().join(','));
-
-        return hash.digest('hex');
-    }
-
-
-
-
-
     async getCluster({
-        dataSet,
+        dataSetIdentifier,
         dataSource,
     }) {
         if (!this.cluster) {
@@ -136,7 +92,7 @@ export default class DataController extends Controller {
 
             // get an active infect cluster
             const clusterResponse = await this.client.get(`${this.clusterHost}/rda-cluster.cluster-info`).query({
-                dataSet,
+                dataSet: dataSetIdentifier,
                 dataSource,
             }).expect(200).send();
 
@@ -144,64 +100,5 @@ export default class DataController extends Controller {
         }
 
         return this.cluster;
-    }
-
-
-
-
-
-
-
-
-    validateFilters(queryFilter) {
-        const filter = {
-            ageGroupIds: [],
-            regionIds: [],
-            hospitalStatusIds: [],
-        };
-
-        if (typeof queryFilter === 'string' && queryFilter.length) {
-            const rawFilter = JSON.parse(queryFilter);
-            
-
-            if (rawFilter && rawFilter.ageGroupIds) {
-                if (Array.isArray(rawFilter.ageGroupIds)) {
-                    rawFilter.ageGroupIds.forEach((id) => {
-                        if (!Number.isNaN(id)) {
-                            filter.ageGroupIds.push(id);
-                        } else throw new Error(`Invalid filter value in ageGroupIds: expected an integer!`);
-                    });
-                } else throw new Error(`Invalid filter value ageGroupIds: expected an array!`);
-            }
-
-
-            if (rawFilter && rawFilter.regionIds) {
-                if (Array.isArray(rawFilter.regionIds)) {
-                    rawFilter.regionIds.forEach((id) => {
-                        if (!Number.isNaN(id)) {
-                            filter.regionIds.push(id);
-                        } else throw new Error(`Invalid filter value in regionIds: expected an integer!`);
-                    });
-                } else throw new Error(`Invalid filter value regionIds: expected an array!`);
-            }
-
-
-            if (rawFilter && rawFilter.hospitalStatusIds) {
-                if (Array.isArray(rawFilter.hospitalStatusIds)) {
-                    rawFilter.hospitalStatusIds.forEach((id) => {
-                        if (!Number.isNaN(id)) {
-                            filter.hospitalStatusIds.push(id);
-                        } else throw new Error(`Invalid filter value in hospitalStatusIds: expected an integer!`);
-                    });
-                } else throw new Error(`Invalid filter value hospitalStatusIds: expected an array!`);
-            }
-
-            if (rawFilter && rawFilter.dateFrom && rawFilter.dateTo) {
-                filter.dateFrom = rawFilter.dateFrom;
-                filter.dateTo = rawFilter.dateTo;
-            }
-        }
-
-        return filter;
     }
 }
