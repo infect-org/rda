@@ -24,9 +24,9 @@
   },
   "homepage": "https://github.com/infect-org/rda#readme",
   "devDependencies": {
-    "@infect/rda-cluster-service": "^3.0.0",
+    "@infect/rda-cluster-service": "^3.0.1",
     "@infect/rda-compute-service": "^3.0.0",
-    "@infect/rda-service-registry": "^3.0.0",
+    "@infect/rda-service-registry": "^3.0.1",
     "section-tests": "^2.2.4"
   },
   "dependencies": {
