@@ -8,4 +8,4 @@ service-registry:
 guideline:
     host: https://api.infect.info
     compound-path: /guideline/v1/therapy_compound
-    bacterium-path: /guideline/v1/diagnosis_bacterium
+    bacterium-path: /guideline/v1/diagnosis_bacterium 

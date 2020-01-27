@@ -25,7 +25,7 @@ export default class TenantConfig {
         const authority = request.hasHeader('X-Forwarded-Host') ? request.getHeader('X-Forwarded-Host') : request.getHeader(':authority');
         const scheme = request.hasHeader('X-Forwarded-Proto') ? request.getHeader('X-Forwarded-Proto') : request.getHeader(':scheme');
         const domain = authority.replace(/:[0-9]+/gi, '');
-
+        
         if (!this.cache.has(domain)) {
             const promise = (async() => {
                 const host = this.tenantHost || `${scheme}://${authority}`;

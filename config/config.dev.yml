@@ -13,5 +13,5 @@ guideline:
     bacterium-path: /guideline/v1/diagnosis_bacterium
 
   
-testing:
-    tenantHost: https://api.infect.info
+#testing:
+#    tenantHost: https://api.infect.info

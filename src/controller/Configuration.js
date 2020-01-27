@@ -54,7 +54,7 @@ export default class ConfigurationController extends Controller {
             .send();
 
         // get guideline data
-        const guidelineHost = this.config.get('guideline.host');
+        const guidelineHost = `${scheme}://${authority}`;
         const guidelineCompoundPath = this.config.get('guideline.compound-path');
         const guidelineBacteriumPath = this.config.get('guideline.bacterium-path');
 
