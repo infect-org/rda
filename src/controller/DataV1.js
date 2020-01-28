@@ -38,15 +38,29 @@ export default class DataV1Controller extends Controller {
         const authority = request.hasHeader('X-Forwarded-Host') ? request.getHeader('X-Forwarded-Host') : request.getHeader(':authority');
         const scheme = request.hasHeader('X-Forwarded-Proto') ? request.getHeader('X-Forwarded-Proto') : request.getHeader(':scheme');
 
+        // try to convert old query parameters to new ones
+        const query = request.query();
+        if (query.parameters) {
+            try {
+                query.parameters = JSON.parse(query.parameters);
+                if (query.parameters && query.parameters.hospitalStatusIds) {
+                    query.parameters.patientSettingIds = query.parameters.hospitalStatusIds;
+                    delete query.parameters.patientSettingIds;
+                    query.parameters = JSON.stringify(query.parameters);
+                }
+            } catch (e) {}
+        }
+
         // get rda configuration
         const rdaResponse = await this.client.get(`${rdaHost}/rda.data`)
             .setHeader('X-Forwarded-Host', authority)
             .setHeader('X-Forwarded-Proto', scheme)
-            .query(request.query())
+            .query(query)
             .expect(200)
             .send();
 
         const data = await rdaResponse.getData(); 
+
 
         data.values = data.values.map(value => ({
             resistant: value.resistant,
