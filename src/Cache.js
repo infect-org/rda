@@ -39,10 +39,14 @@ export default class Cache {
 
 
     getKey(request) {
+        const authority = request.hasHeader('X-Forwarded-Host') ? request.getHeader('X-Forwarded-Host') : request.getHeader(':authority');
         const query = request.query();
         const items = this.traverseData(query);
+        
         items.sort((a, b) => a[0] > b[0] ? 1 : -1);
-        const str = JSON.stringify(items);
+
+        const str = JSON.stringify(items) + authority;
+
         return crypto.createHash('md5').update(str).digest('hex');
     }
 

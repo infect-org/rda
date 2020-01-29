@@ -44,7 +44,7 @@ export default class DataController extends Controller {
         const dataSource = 'infect-rda-sample-storage';
         const functionName = query && query.functionName ? query.functionName : 'Infect';
         let parameters = query.filter;
-
+        
         if (this.cache.has(request)) {
             return this.cache.get(request);
         } else {
