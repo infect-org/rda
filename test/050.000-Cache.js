@@ -11,6 +11,16 @@ class Request {
         this.queryData = queryData;
     }
 
+
+    hasHeader() {
+        return false;
+    }
+
+
+    getHeader() {
+        return '';
+    }
+
     query() {
         return this.queryData;
     }

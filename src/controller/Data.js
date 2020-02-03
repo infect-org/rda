@@ -43,8 +43,8 @@ export default class DataController extends Controller {
         const dataSetIdentifier = tenantConfig.dataSet;
         const dataSource = 'infect-rda-sample-storage';
         const functionName = query && query.functionName ? query.functionName : 'Infect';
-        let parameters = query.filter;
         
+
         if (this.cache.has(request)) {
             return this.cache.get(request);
         } else {
@@ -59,15 +59,26 @@ export default class DataController extends Controller {
             // lets take the first shard as the reducer
             const shardHost = cluster.shards[0].url;
 
+            let parameters;
 
-            if (!parameters) parameters = {};
+            if (query.filter && query.filter.length) {
+                try {
+                    parameters = JSON.parse(query.filter);
+                } catch (err) {
+                    return request.response().status(400).send(`Failed to parse filters: ${err.message}`);
+                }
+            } else parameters = {};
 
+
+            if (!parameters.dataVersionStatusIdentifier) {
+                parameters.dataVersionStatusIdentifier = ['active'];
+            }
 
             // call the reducer
             const res = await this.client.post(`${shardHost}/rda-compute.reduction`).expect(201).send({
                 dataSetIdentifier,
                 functionName,
-                parameters,
+                parameters: JSON.stringify(parameters),
                 shards: cluster.shards,
                 options: tenantConfig,
             });
