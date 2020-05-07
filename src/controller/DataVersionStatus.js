@@ -54,10 +54,9 @@ export default class DataVersionStatusController extends Controller {
         }
 
         // get rda configuration
-        const rdaResponse = await this.client.patch(`${sampleStorageHost}/infect-rda-sample-storage.dataVersionStatus`)
+        const rdaResponse = await this.client.patch(`${sampleStorageHost}/infect-rda-sample-storage.dataVersionStatus/${identifier}`)
             .expect(200)
             .send({
-                identifier,
                 action,
             });
 
