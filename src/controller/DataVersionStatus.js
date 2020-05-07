@@ -63,7 +63,7 @@ export default class DataVersionStatusController extends Controller {
         const data = await rdaResponse.getData(); 
 
 
-        if (data.activated === 'true') {
+        if (data.activated === true) {
             return `The data version will be published on the next cluster restart (around midnigth)`;
         } else {
             return `The data version will be unpublished on the next cluster restart (around midnigth)`;
