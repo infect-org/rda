@@ -12,6 +12,7 @@ import DataV1Controller from './controller/DataV1.js';
 import ConfigurationV1Controller from './controller/ConfigurationV1.js';
 import DataController from './controller/Data.js';
 import ConfigurationController from './controller/Configuration.js';
+import DataVersionStatusController from './controller/DataVersionStatus.js';
 
 
 
@@ -71,6 +72,10 @@ export default class RDA extends RDAService {
         }));
 
         this.registerController(new ConfigurationV1Controller({
+            registryClient: this.registryClient,
+        }));
+
+        this.registerController(new DataVersionStatusController({
             registryClient: this.registryClient,
         }));
 
