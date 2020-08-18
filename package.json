@@ -25,14 +25,14 @@
   "homepage": "https://github.com/infect-org/rda#readme",
   "devDependencies": {
     "@infect/rda-cluster-service": "^3.1.1",
-    "@infect/rda-compute-service": "^3.0.2",
-    "@infect/rda-service-registry": "^3.0.3",
+    "@infect/rda-compute-service": "^3.0.4",
+    "@infect/rda-service-registry": "^3.0.4",
     "section-tests": "^2.2.4"
   },
   "dependencies": {
-    "@distributed-systems/http2-client": "^2.1.1",
-    "@infect/rda-service": "^5.0.0",
-    "@infect/rda-service-manager": "^2.0.3",
+    "@distributed-systems/http2-client": "^2.1.3",
+    "@infect/rda-service": "^5.1.0",
+    "@infect/rda-service-manager": "^2.1.0",
     "ee-log": "^3.0.9",
     "ee-lru-cache": "^1.0.0",
     "logd": "^2.3.0",
