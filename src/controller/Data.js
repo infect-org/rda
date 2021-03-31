@@ -43,6 +43,7 @@ export default class DataController extends Controller {
         const dataSetIdentifier = tenantConfig.dataSet;
         const dataSource = 'infect-rda-sample-storage';
         const functionName = query && query.functionName ? query.functionName : 'Infect';
+        const subRoutines = query && query.subRoutines ? query.subRoutines : '[]';
         
 
         if (this.cache.has(request)) {
@@ -58,27 +59,50 @@ export default class DataController extends Controller {
             // the cluster is live!
             // lets take the first shard as the reducer
             const shardHost = cluster.shards[0].url;
+            let parameters = {};
+            let rountines = [];
 
-            let parameters;
 
+            // extract filters, set defaults
             if (query.filter && query.filter.length) {
                 try {
                     parameters = JSON.parse(query.filter);
                 } catch (err) {
                     return request.response().status(400).send(`Failed to parse filters: ${err.message}`);
                 }
-            } else parameters = {};
-
+            }
 
             if (!parameters.dataVersionStatusIdentifier) {
                 parameters.dataVersionStatusIdentifier = ['active'];
             }
+
+
+            // make sure the subroutines are not DDosing our system
+            try {
+                const rountines = JSON.parse(subRoutines);
+            } catch (err) {
+                return request.response().status(400).send(`Failed to parse subRoutines: ${err.message}`);
+            }
+
+
+            if (rountines.includes('DiscDiffusionPercentile') || rountines.includes('MICPercentileSubRoutine')) {
+                if (!parameters.microorganismIds || parameters.microorganismIds.length > 10) {
+                    return request.response().status(400).send(`Cannot apply the DiscDiffusionPercentile or MICPercentile SubRoutine to a dataset that was NOT filtered for a maximum of 10 microorganismIds!`);
+                }
+
+                if (!parameters.compoundSubstanceIds || parameters.compoundSubstanceIds.length > 10) {
+                    return request.response().status(400).send(`Cannot apply the DiscDiffusionPercentile or MICPercentile SubRoutine to a dataset that was NOT filtered for a maximum of 10 compoundSubstanceIds!`);
+                }
+            }
+                
+
 
             // call the reducer
             const res = await this.client.post(`${shardHost}/rda-compute.reduction`).expect(201).send({
                 dataSetIdentifier,
                 functionName,
                 parameters: JSON.stringify(parameters),
+                subRoutines,
                 shards: cluster.shards,
                 options: tenantConfig,
             });
